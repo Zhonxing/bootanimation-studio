@@ -1,10 +1,10 @@
 """Main application window for Android BootAnimation Generator.
 Built with CustomTkinter for a sleek, modern desktop experience.
-Preserves 1:1 original image proportions, automatic image-matching resolution,
-full-screen background color extension, and smart border matting.
+Supports full Chinese & English (中/英) localization, 1:1 original image ratio,
+automatic image-matching resolution, full-screen background extension, and smart border matting.
 """
 
-from typing import Optional, Tuple
+from typing import Optional, Tuple, Dict, Any
 import os
 import threading
 from tkinter import filedialog, messagebox
@@ -22,6 +22,143 @@ from ui.preview_canvas import PreviewCanvas
 class BootAnimationApp(ctk.CTk):
     """Main Application GUI."""
 
+    I18N = {
+        "zh": {
+            "window_title": "Android BootAnimation 一键生成器",
+            "left_panel_label": "⚙️ 参数配置与素材设置",
+            "lang_label": "界面语言 / Language:",
+            "sec1_title": "1. 选择 Logo 图片",
+            "path_placeholder": "请选择图片 (支持 PNG/JPG 等)",
+            "browse_btn": "浏览...",
+            "sample_android_btn": "✨ Android 示例",
+            "sample_blue_btn": "🌌 深海蓝主题示例",
+            "matting_mode_label": "Logo 抠图去底方式:",
+            "matting_modes": [
+                "自动检测 (推荐)",
+                "智能吸色去底 (以边缘色抠图)",
+                "保持原样 (透明 PNG)",
+                "智能去黑底 (纯黑背景)",
+                "智能去白底 (纯白背景)",
+                "亮度转透明 (灰度图)"
+            ],
+            "sec2_title": "2. 全屏底色设置 (方案 B 沉浸式延展)",
+            "screen_bg_modes": [
+                "自动延展图片底色 (无缝沉浸)",
+                "经典纯黑 (#000000)",
+                "自定义颜色"
+            ],
+            "current_bg_text": "当前底色: {}",
+            "apply_color_btn": "应用颜色",
+            "sec3_title": "3. Logo 画面比例",
+            "ratio_badge_text": "✓ 保留原图原始比例 (1:1 像素映射，不虚化、不放大拉伸)",
+            "sec4_title": "4. 屏幕分辨率与帧率",
+            "target_res_label": "目标输出分辨率:",
+            "match_image_size": "跟随图片原图尺寸 ({})",
+            "match_image_default": "跟随图片原图尺寸 (自动识别)",
+            "manual_res_option": "手动输入自定义尺寸...",
+            "effective_res_badge": "🎯 实际输出尺寸: {} x {}",
+            "custom_w_placeholder": "宽 W",
+            "custom_h_placeholder": "高 H",
+            "apply_size_btn": "应用尺寸",
+            "fps_label": "播放帧率 (FPS):",
+            "sec5_title": "5. 光影扫光质感微调",
+            "angle_label": "光束倾角: {}°",
+            "width_label": "光束宽度: {:.2f}",
+            "speed_label": "扫光速度: {:.1f} 秒/次",
+            "pause_label": "循环间隔停顿: {:.1f} 秒",
+            "bright_label": "未扫光底色亮度: {}%",
+            "color_preset_label": "光影色彩方案:",
+            "color_presets": [
+                "经典冷白",
+                "原生冰蓝",
+                "安卓经典绿",
+                "流金璀璨"
+            ],
+            "right_title": "📱 动效实时预览 (Android Sheen)",
+            "right_sub": "所见即所得：保留原图 1:1 比例与排版，全屏无缝底色延展",
+            "export_zip_btn": "⚡ 一键生成并导出 bootanimation.zip",
+            "export_gif_btn": "🎞 导出预览 GIF 动图 (用于分享预览)",
+            "open_folder_btn": "📂 打开导出目录",
+            "status_ready": "准备就绪",
+            "dlg_select_image": "选择 Logo 图片",
+            "dlg_save_zip": "保存 bootanimation.zip",
+            "dlg_save_gif": "保存预览 GIF",
+            "dlg_export_success_title": "导出成功",
+            "dlg_export_fail_title": "导出失败",
+            "zip_success_msg": "bootanimation.zip 已成功生成！\n\n分辨率: {} x {} ({} FPS)\n全屏底色: {} (无缝沉浸)\n保存路径: {}\n\n已通过 Android AOSP 规范验证（0% 压缩率，LF 换行）。",
+            "gif_success_msg": "预览动图已成功导出至:\n{}",
+            "status_success_zip": "✅ 生成成功！尺寸 {}x{} 底色 {}",
+            "status_success_gif": "✅ 预览 GIF 已保存！"
+        },
+        "en": {
+            "window_title": "Android BootAnimation Studio",
+            "left_panel_label": "⚙️ Configuration & Media Settings",
+            "lang_label": "Language / 界面语言:",
+            "sec1_title": "1. Select Logo Image",
+            "path_placeholder": "Select image (PNG/JPG/WebP supported)",
+            "browse_btn": "Browse...",
+            "sample_android_btn": "✨ Android Sample",
+            "sample_blue_btn": "🌌 Deep Blue Sample",
+            "matting_mode_label": "Logo Matting & Alpha Extraction:",
+            "matting_modes": [
+                "Auto Detect (Recommended)",
+                "Smart Border Chroma Key",
+                "Keep As-Is (Transparent PNG)",
+                "Remove Black Background",
+                "Remove White Background",
+                "Luminance to Alpha"
+            ],
+            "sec2_title": "2. Screen Background (Plan B Extension)",
+            "screen_bg_modes": [
+                "Auto Extend Image Border Color (Seamless)",
+                "Classic Pure Black (#000000)",
+                "Custom Color"
+            ],
+            "current_bg_text": "Current BG: {}",
+            "apply_color_btn": "Apply Color",
+            "sec3_title": "3. Logo Screen Proportion",
+            "ratio_badge_text": "✓ 1:1 Original Proportions (Native pixels, zero distortion/stretching)",
+            "sec4_title": "4. Screen Resolution & Framerate",
+            "target_res_label": "Target Resolution:",
+            "match_image_size": "Match Image Original Size ({})",
+            "match_image_default": "Match Image Original Size (Auto)",
+            "manual_res_option": "Manual Custom Dimensions...",
+            "effective_res_badge": "🎯 Effective Resolution: {} x {}",
+            "custom_w_placeholder": "Width W",
+            "custom_h_placeholder": "Height H",
+            "apply_size_btn": "Apply Size",
+            "fps_label": "Framerate (FPS):",
+            "sec5_title": "5. Light Sheen Fine-Tuning",
+            "angle_label": "Beam Angle: {}°",
+            "width_label": "Beam Width: {:.2f}",
+            "speed_label": "Sweep Speed: {:.1f} s/cycle",
+            "pause_label": "Loop Pause: {:.1f} s",
+            "bright_label": "Base Ambient Brightness: {}%",
+            "color_preset_label": "Color Palette Preset:",
+            "color_presets": [
+                "Classic Silver-White",
+                "Native Ice Blue",
+                "Classic Android Green",
+                "Gleaming Gold"
+            ],
+            "right_title": "📱 Real-Time Preview (Android Sheen)",
+            "right_sub": "WYSIWYG: 1:1 original proportions, seamless full-screen background",
+            "export_zip_btn": "⚡ One-Click Export bootanimation.zip",
+            "export_gif_btn": "🎞 Export Preview GIF (For Quick Sharing)",
+            "open_folder_btn": "📂 Open Output Folder",
+            "status_ready": "Ready",
+            "dlg_select_image": "Select Logo Image",
+            "dlg_save_zip": "Save bootanimation.zip",
+            "dlg_save_gif": "Save Preview GIF",
+            "dlg_export_success_title": "Export Succeeded",
+            "dlg_export_fail_title": "Export Failed",
+            "zip_success_msg": "bootanimation.zip generated successfully!\n\nResolution: {} x {} ({} FPS)\nBackground: {} (Seamless)\nSaved to: {}\n\nComplies with Android AOSP specification (0% STORED, LF line ends).",
+            "gif_success_msg": "Preview GIF saved successfully to:\n{}",
+            "status_success_zip": "✅ Exported! Size {}x{} BG {}",
+            "status_success_gif": "✅ Preview GIF saved successfully!"
+        }
+    }
+
     STANDARD_PRESETS = {
         "1080 x 2400 (现代手机 20:9)": (1080, 2400),
         "1080 x 1920 (经典手机 16:9)": (1080, 1920),
@@ -31,33 +168,46 @@ class BootAnimationApp(ctk.CTk):
         "1280 x 800 (平板 / 工控屏)": (1280, 800)
     }
 
+    STANDARD_PRESETS_EN = {
+        "1080 x 2400 (Modern Phone 20:9)": (1080, 2400),
+        "1080 x 1920 (Classic Phone 16:9)": (1080, 1920),
+        "720 x 1280 (HD 720P)": (720, 1280),
+        "1440 x 3200 (2K QHD)": (1440, 3200),
+        "1920 x 1080 (Automotive / Tablet)": (1920, 1080),
+        "1280 x 800 (Tablet / Industrial)": (1280, 800)
+    }
+
     COLOR_PRESETS = {
         "经典冷白": ((255, 255, 255), (220, 235, 255)),
         "原生冰蓝": ((210, 240, 255), (140, 200, 255)),
         "安卓经典绿": ((164, 198, 57), (130, 215, 80)),
-        "流金璀璨": ((255, 215, 80), (255, 180, 50))
+        "流金璀璨": ((255, 215, 80), (255, 180, 50)),
+        "Classic Silver-White": ((255, 255, 255), (220, 235, 255)),
+        "Native Ice Blue": ((210, 240, 255), (140, 200, 255)),
+        "Classic Android Green": ((164, 198, 57), (130, 215, 80)),
+        "Gleaming Gold": ((255, 215, 80), (255, 180, 50))
     }
 
-    BG_MODES = {
+    BG_MODE_MAP = {
         "自动检测 (推荐)": "auto",
         "智能吸色去底 (以边缘色抠图)": "smart_border",
         "保持原样 (透明 PNG)": "keep",
         "智能去黑底 (纯黑背景)": "remove_black",
         "智能去白底 (纯白背景)": "remove_white",
-        "亮度转透明 (灰度图)": "luminance"
+        "亮度转透明 (灰度图)": "luminance",
+        "Auto Detect (Recommended)": "auto",
+        "Smart Border Chroma Key": "smart_border",
+        "Keep As-Is (Transparent PNG)": "keep",
+        "Remove Black Background": "remove_black",
+        "Remove White Background": "remove_white",
+        "Luminance to Alpha": "luminance"
     }
-
-    SCREEN_BG_OPTIONS = [
-        "自动延展图片底色 (无缝沉浸)",
-        "经典纯黑 (#000000)",
-        "自定义颜色"
-    ]
 
     def __init__(self):
         super().__init__()
 
-        # Window settings
-        self.title("Android BootAnimation 一键生成器")
+        self.current_lang = "zh"
+        self.title(self.I18N[self.current_lang]["window_title"])
         self.geometry("1020x780")
         self.minsize(960, 720)
         ctk.set_appearance_mode("Dark")
@@ -72,13 +222,16 @@ class BootAnimationApp(ctk.CTk):
         self._build_ui()
         self._load_default_sample()
 
+    def _t(self, key: str) -> str:
+        return self.I18N[self.current_lang].get(key, key)
+
     def _build_ui(self):
         self.grid_columnconfigure(0, weight=1)
         self.grid_columnconfigure(1, weight=1)
         self.grid_rowconfigure(0, weight=1)
 
         # Left Column (Settings & Controls)
-        self.left_scroll = ctk.CTkScrollableFrame(self, label_text="⚙️ 参数配置与素材设置", corner_radius=10)
+        self.left_scroll = ctk.CTkScrollableFrame(self, label_text=self._t("left_panel_label"), corner_radius=10)
         self.left_scroll.grid(row=0, column=0, sticky="nsew", padx=(15, 8), pady=15)
 
         # Right Column (Preview & Export)
@@ -91,17 +244,34 @@ class BootAnimationApp(ctk.CTk):
     def _build_left_panel(self):
         parent = self.left_scroll
 
+        # --- Top Language Switch Row ---
+        lang_row = ctk.CTkFrame(parent, fg_color="transparent")
+        lang_row.pack(fill="x", pady=(0, 10))
+
+        self.lang_label = ctk.CTkLabel(lang_row, text=self._t("lang_label"), font=("Segoe UI", 12))
+        self.lang_label.pack(side="left")
+
+        self.lang_seg = ctk.CTkSegmentedButton(
+            lang_row,
+            values=["中文", "English"],
+            command=self._on_language_change,
+            width=140,
+            height=26
+        )
+        self.lang_seg.set("中文")
+        self.lang_seg.pack(side="right")
+
         # --- Section 1: Logo Input ---
-        sec1 = ctk.CTkLabel(parent, text="1. 选择 Logo 图片", font=("Segoe UI", 14, "bold"))
-        sec1.pack(anchor="w", pady=(5, 6))
+        self.sec1_label = ctk.CTkLabel(parent, text=self._t("sec1_title"), font=("Segoe UI", 14, "bold"))
+        self.sec1_label.pack(anchor="w", pady=(5, 6))
 
         file_row = ctk.CTkFrame(parent, fg_color="transparent")
         file_row.pack(fill="x", pady=(0, 6))
 
-        self.path_entry = ctk.CTkEntry(file_row, placeholder_text="请选择图片 (支持 PNG/JPG 等)", height=32)
+        self.path_entry = ctk.CTkEntry(file_row, placeholder_text=self._t("path_placeholder"), height=32)
         self.path_entry.pack(side="left", fill="x", expand=True, padx=(0, 6))
 
-        self.browse_btn = ctk.CTkButton(file_row, text="浏览...", width=70, height=32, command=self._on_browse_file)
+        self.browse_btn = ctk.CTkButton(file_row, text=self._t("browse_btn"), width=70, height=32, command=self._on_browse_file)
         self.browse_btn.pack(side="right")
 
         sample_row = ctk.CTkFrame(parent, fg_color="transparent")
@@ -109,7 +279,7 @@ class BootAnimationApp(ctk.CTk):
 
         self.sample_btn = ctk.CTkButton(
             sample_row,
-            text="✨ Android 示例",
+            text=self._t("sample_android_btn"),
             height=28,
             fg_color="#2b3b28",
             hover_color="#3b5237",
@@ -119,7 +289,7 @@ class BootAnimationApp(ctk.CTk):
 
         self.sample_blue_btn = ctk.CTkButton(
             sample_row,
-            text="🌌 深海蓝主题示例",
+            text=self._t("sample_blue_btn"),
             height=28,
             fg_color="#1e293b",
             hover_color="#334155",
@@ -128,27 +298,27 @@ class BootAnimationApp(ctk.CTk):
         self.sample_blue_btn.pack(side="left")
 
         # Background matting mode
-        bg_label = ctk.CTkLabel(parent, text="Logo 抠图去底方式:", font=("Segoe UI", 12))
-        bg_label.pack(anchor="w", pady=(0, 2))
+        self.bg_label = ctk.CTkLabel(parent, text=self._t("matting_mode_label"), font=("Segoe UI", 12))
+        self.bg_label.pack(anchor="w", pady=(0, 2))
 
-        self.bg_mode_var = ctk.StringVar(value="自动检测 (推荐)")
+        self.bg_mode_var = ctk.StringVar(value=self._t("matting_modes")[0])
         self.bg_mode_menu = ctk.CTkOptionMenu(
             parent,
             variable=self.bg_mode_var,
-            values=list(self.BG_MODES.keys()),
+            values=self._t("matting_modes"),
             command=lambda _: self._trigger_preview_update()
         )
         self.bg_mode_menu.pack(fill="x", pady=(0, 10))
 
         # --- Section 2: Screen Background Extension (方案 B) ---
-        sec_bg = ctk.CTkLabel(parent, text="2. 全屏底色设置 (方案 B 沉浸式延展)", font=("Segoe UI", 14, "bold"))
-        sec_bg.pack(anchor="w", pady=(5, 6))
+        self.sec2_label = ctk.CTkLabel(parent, text=self._t("sec2_title"), font=("Segoe UI", 14, "bold"))
+        self.sec2_label.pack(anchor="w", pady=(5, 6))
 
-        self.screen_bg_var = ctk.StringVar(value="自动延展图片底色 (无缝沉浸)")
+        self.screen_bg_var = ctk.StringVar(value=self._t("screen_bg_modes")[0])
         self.screen_bg_menu = ctk.CTkOptionMenu(
             parent,
             variable=self.screen_bg_var,
-            values=self.SCREEN_BG_OPTIONS,
+            values=self._t("screen_bg_modes"),
             command=self._on_screen_bg_mode_change
         )
         self.screen_bg_menu.pack(fill="x", pady=(0, 6))
@@ -159,7 +329,7 @@ class BootAnimationApp(ctk.CTk):
 
         self.bg_preview_badge = ctk.CTkLabel(
             self.color_badge_frame,
-            text="当前底色: #000000",
+            text=self._t("current_bg_text").format("#000000"),
             font=("Segoe UI", 11, "bold"),
             fg_color="#000000",
             text_color="#FFFFFF",
@@ -177,19 +347,19 @@ class BootAnimationApp(ctk.CTk):
         )
         self.custom_hex_btn = ctk.CTkButton(
             self.color_badge_frame,
-            text="应用颜色",
+            text=self._t("apply_color_btn"),
             width=70,
             height=26,
             command=self._on_apply_custom_color
         )
 
         # --- Section 3: Logo Proportion Setting (保留原图比例) ---
-        sec_scale = ctk.CTkLabel(parent, text="3. Logo 画面比例", font=("Segoe UI", 14, "bold"))
-        sec_scale.pack(anchor="w", pady=(5, 6))
+        self.sec3_label = ctk.CTkLabel(parent, text=self._t("sec3_title"), font=("Segoe UI", 14, "bold"))
+        self.sec3_label.pack(anchor="w", pady=(5, 6))
 
         self.ratio_badge = ctk.CTkLabel(
             parent,
-            text="✓ 保留原图原始比例 (1:1 像素映射，不虚化、不放大拉伸)",
+            text=self._t("ratio_badge_text"),
             font=("Segoe UI", 11, "bold"),
             fg_color="#064E3B",
             text_color="#6EE7B7",
@@ -199,21 +369,21 @@ class BootAnimationApp(ctk.CTk):
         self.ratio_badge.pack(fill="x", pady=(0, 15))
 
         # --- Section 4: Screen Resolution & FPS ---
-        sec4 = ctk.CTkLabel(parent, text="4. 屏幕分辨率与帧率", font=("Segoe UI", 14, "bold"))
-        sec4.pack(anchor="w", pady=(5, 6))
+        self.sec4_label = ctk.CTkLabel(parent, text=self._t("sec4_title"), font=("Segoe UI", 14, "bold"))
+        self.sec4_label.pack(anchor="w", pady=(5, 6))
 
-        res_label = ctk.CTkLabel(parent, text="目标输出分辨率:", font=("Segoe UI", 12))
-        res_label.pack(anchor="w", pady=(0, 2))
+        self.res_label = ctk.CTkLabel(parent, text=self._t("target_res_label"), font=("Segoe UI", 12))
+        self.res_label.pack(anchor="w", pady=(0, 2))
 
         # Dedicated Resolution Container
         self.res_container = ctk.CTkFrame(parent, fg_color="transparent")
         self.res_container.pack(fill="x", pady=(0, 6))
 
-        self.res_var = ctk.StringVar(value="跟随图片原图尺寸 (自动识别)")
+        self.res_var = ctk.StringVar(value=self._t("match_image_default"))
         self.res_menu = ctk.CTkOptionMenu(
             self.res_container,
             variable=self.res_var,
-            values=["跟随图片原图尺寸 (自动识别)"] + list(self.STANDARD_PRESETS.keys()) + ["手动输入自定义尺寸..."],
+            values=[self._t("match_image_default")] + list(self.STANDARD_PRESETS.keys()) + [self._t("manual_res_option")],
             command=self._on_preset_change
         )
         self.res_menu.pack(fill="x", pady=(0, 4))
@@ -221,7 +391,7 @@ class BootAnimationApp(ctk.CTk):
         # Info badge showing the actual effective resolution
         self.res_badge = ctk.CTkLabel(
             self.res_container,
-            text="🎯 实际输出尺寸: 1080 x 2400",
+            text=self._t("effective_res_badge").format(1080, 2400),
             font=("Segoe UI", 11),
             text_color="#10B981"
         )
@@ -229,26 +399,26 @@ class BootAnimationApp(ctk.CTk):
 
         # Custom resolution inputs
         self.custom_res_frame = ctk.CTkFrame(self.res_container, fg_color="transparent")
-        self.custom_w_entry = ctk.CTkEntry(self.custom_res_frame, placeholder_text="宽 W", width=80)
+        self.custom_w_entry = ctk.CTkEntry(self.custom_res_frame, placeholder_text=self._t("custom_w_placeholder"), width=80)
         self.custom_w_entry.pack(side="left", padx=(0, 4))
         self.custom_w_entry.insert(0, "1080")
 
         x_label = ctk.CTkLabel(self.custom_res_frame, text="x")
         x_label.pack(side="left", padx=4)
 
-        self.custom_h_entry = ctk.CTkEntry(self.custom_res_frame, placeholder_text="高 H", width=80)
+        self.custom_h_entry = ctk.CTkEntry(self.custom_res_frame, placeholder_text=self._t("custom_h_placeholder"), width=80)
         self.custom_h_entry.pack(side="left", padx=(4, 8))
         self.custom_h_entry.insert(0, "2400")
 
         self.apply_custom_btn = ctk.CTkButton(
-            self.custom_res_frame, text="应用尺寸", width=70,
+            self.custom_res_frame, text=self._t("apply_size_btn"), width=70,
             command=self._trigger_preview_update
         )
         self.apply_custom_btn.pack(side="left")
 
         # FPS Selection
-        fps_label = ctk.CTkLabel(parent, text="播放帧率 (FPS):", font=("Segoe UI", 12))
-        fps_label.pack(anchor="w", pady=(8, 2))
+        self.fps_label = ctk.CTkLabel(parent, text=self._t("fps_label"), font=("Segoe UI", 12))
+        self.fps_label.pack(anchor="w", pady=(8, 2))
 
         self.fps_var = ctk.StringVar(value="30 FPS")
         self.fps_seg = ctk.CTkSegmentedButton(
@@ -259,53 +429,53 @@ class BootAnimationApp(ctk.CTk):
         self.fps_seg.pack(fill="x", pady=(0, 15))
 
         # --- Section 5: Light Sheen Tuning ---
-        sec5 = ctk.CTkLabel(parent, text="5. 光影扫光质感微调", font=("Segoe UI", 14, "bold"))
-        sec5.pack(anchor="w", pady=(5, 6))
+        self.sec5_label = ctk.CTkLabel(parent, text=self._t("sec5_title"), font=("Segoe UI", 14, "bold"))
+        self.sec5_label.pack(anchor="w", pady=(5, 6))
 
         # Beam Angle
-        self.angle_label = ctk.CTkLabel(parent, text="光束倾角: 25°", font=("Segoe UI", 12))
+        self.angle_label = ctk.CTkLabel(parent, text=self._t("angle_label").format(25), font=("Segoe UI", 12))
         self.angle_label.pack(anchor="w", pady=(0, 2))
         self.angle_slider = ctk.CTkSlider(parent, from_=0, to=45, number_of_steps=45, command=self._on_angle_change)
         self.angle_slider.set(25)
         self.angle_slider.pack(fill="x", pady=(0, 10))
 
         # Beam Width
-        self.width_label = ctk.CTkLabel(parent, text="光束宽度: 0.12", font=("Segoe UI", 12))
+        self.width_label = ctk.CTkLabel(parent, text=self._t("width_label").format(0.12), font=("Segoe UI", 12))
         self.width_label.pack(anchor="w", pady=(0, 2))
         self.width_slider = ctk.CTkSlider(parent, from_=0.05, to=0.30, number_of_steps=25, command=self._on_width_change)
         self.width_slider.set(0.12)
         self.width_slider.pack(fill="x", pady=(0, 10))
 
         # Sweep Duration
-        self.speed_label = ctk.CTkLabel(parent, text="扫光速度: 1.4 秒/次", font=("Segoe UI", 12))
+        self.speed_label = ctk.CTkLabel(parent, text=self._t("speed_label").format(1.4), font=("Segoe UI", 12))
         self.speed_label.pack(anchor="w", pady=(0, 2))
         self.speed_slider = ctk.CTkSlider(parent, from_=0.8, to=3.0, number_of_steps=22, command=self._on_speed_change)
         self.speed_slider.set(1.4)
         self.speed_slider.pack(fill="x", pady=(0, 10))
 
         # Pause Duration
-        self.pause_label = ctk.CTkLabel(parent, text="循环间隔停顿: 0.6 秒", font=("Segoe UI", 12))
+        self.pause_label = ctk.CTkLabel(parent, text=self._t("pause_label").format(0.6), font=("Segoe UI", 12))
         self.pause_label.pack(anchor="w", pady=(0, 2))
         self.pause_slider = ctk.CTkSlider(parent, from_=0.0, to=2.0, number_of_steps=20, command=self._on_pause_change)
         self.pause_slider.set(0.6)
         self.pause_slider.pack(fill="x", pady=(0, 10))
 
         # Base brightness
-        self.bright_label = ctk.CTkLabel(parent, text="未扫光底色亮度: 45%", font=("Segoe UI", 12))
+        self.bright_label = ctk.CTkLabel(parent, text=self._t("bright_label").format(45), font=("Segoe UI", 12))
         self.bright_label.pack(anchor="w", pady=(0, 2))
         self.bright_slider = ctk.CTkSlider(parent, from_=0.10, to=0.80, number_of_steps=35, command=self._on_bright_change)
         self.bright_slider.set(0.45)
         self.bright_slider.pack(fill="x", pady=(0, 10))
 
         # Color preset
-        color_label = ctk.CTkLabel(parent, text="光影色彩方案:", font=("Segoe UI", 12))
-        color_label.pack(anchor="w", pady=(0, 2))
+        self.color_label = ctk.CTkLabel(parent, text=self._t("color_preset_label"), font=("Segoe UI", 12))
+        self.color_label.pack(anchor="w", pady=(0, 2))
 
-        self.color_var = ctk.StringVar(value="经典冷白")
+        self.color_var = ctk.StringVar(value=self._t("color_presets")[0])
         self.color_menu = ctk.CTkOptionMenu(
             parent,
             variable=self.color_var,
-            values=list(self.COLOR_PRESETS.keys()),
+            values=self._t("color_presets"),
             command=lambda _: self._trigger_preview_update()
         )
         self.color_menu.pack(fill="x", pady=(0, 15))
@@ -314,11 +484,11 @@ class BootAnimationApp(ctk.CTk):
         parent = self.right_frame
 
         # Title
-        title_label = ctk.CTkLabel(parent, text="📱 动效实时预览 (Android Sheen)", font=("Segoe UI", 16, "bold"))
-        title_label.pack(anchor="w", padx=15, pady=(12, 4))
+        self.right_title = ctk.CTkLabel(parent, text=self._t("right_title"), font=("Segoe UI", 16, "bold"))
+        self.right_title.pack(anchor="w", padx=15, pady=(12, 4))
 
-        sub_label = ctk.CTkLabel(parent, text="所见即所得：保留原图 1:1 比例与排版，全屏无缝底色延展", font=("Segoe UI", 11), text_color="#888888")
-        sub_label.pack(anchor="w", padx=15, pady=(0, 8))
+        self.right_sub = ctk.CTkLabel(parent, text=self._t("right_sub"), font=("Segoe UI", 11), text_color="#888888")
+        self.right_sub.pack(anchor="w", padx=15, pady=(0, 8))
 
         # Preview Widget
         self.preview_canvas = PreviewCanvas(parent, preview_width=300, preview_height=420)
@@ -330,7 +500,7 @@ class BootAnimationApp(ctk.CTk):
 
         self.export_zip_btn = ctk.CTkButton(
             export_box,
-            text="⚡ 一键生成并导出 bootanimation.zip",
+            text=self._t("export_zip_btn"),
             height=40,
             font=("Segoe UI", 14, "bold"),
             command=self._on_export_zip
@@ -339,7 +509,7 @@ class BootAnimationApp(ctk.CTk):
 
         self.export_gif_btn = ctk.CTkButton(
             export_box,
-            text="🎞 导出预览 GIF 动图 (用于分享预览)",
+            text=self._t("export_gif_btn"),
             height=32,
             fg_color="#334155",
             hover_color="#475569",
@@ -353,13 +523,13 @@ class BootAnimationApp(ctk.CTk):
         self.prog_bar.pack(fill="x", pady=(0, 6))
 
         # Status label
-        self.status_label = ctk.CTkLabel(export_box, text="准备就绪", font=("Segoe UI", 11), text_color="#AAAAAA")
+        self.status_label = ctk.CTkLabel(export_box, text=self._t("status_ready"), font=("Segoe UI", 11), text_color="#AAAAAA")
         self.status_label.pack(anchor="w")
 
         # Open folder button
         self.open_dir_btn = ctk.CTkButton(
             export_box,
-            text="📂 打开导出目录",
+            text=self._t("open_folder_btn"),
             height=28,
             fg_color="#222222",
             hover_color="#333333",
@@ -368,30 +538,110 @@ class BootAnimationApp(ctk.CTk):
         self.open_dir_btn.pack(fill="x", pady=(6, 0))
         self.open_dir_btn.pack_forget()
 
+    # --- Language Switching ---
+
+    def _on_language_change(self, value):
+        self.current_lang = "zh" if value == "中文" else "en"
+        self._apply_translations()
+
+    def _apply_translations(self):
+        t = self.I18N[self.current_lang]
+        self.title(t["window_title"])
+        self.left_scroll.configure(label_text=t["left_panel_label"])
+        self.lang_label.configure(text=t["lang_label"])
+
+        self.sec1_label.configure(text=t["sec1_title"])
+        self.path_entry.configure(placeholder_text=t["path_placeholder"])
+        self.browse_btn.configure(text=t["browse_btn"])
+        self.sample_btn.configure(text=t["sample_android_btn"])
+        self.sample_blue_btn.configure(text=t["sample_blue_btn"])
+        self.bg_label.configure(text=t["matting_mode_label"])
+
+        # Update matting modes menu
+        cur_bg_mode_idx = 0
+        self.bg_mode_menu.configure(values=t["matting_modes"])
+        self.bg_mode_var.set(t["matting_modes"][0])
+
+        self.sec2_label.configure(text=t["sec2_title"])
+        self.screen_bg_menu.configure(values=t["screen_bg_modes"])
+        if "纯黑" in self.screen_bg_var.get() or "Pure Black" in self.screen_bg_var.get():
+            self.screen_bg_var.set(t["screen_bg_modes"][1])
+        elif "自定义" in self.screen_bg_var.get() or "Custom" in self.screen_bg_var.get():
+            self.screen_bg_var.set(t["screen_bg_modes"][2])
+        else:
+            self.screen_bg_var.set(t["screen_bg_modes"][0])
+
+        self.custom_hex_btn.configure(text=t["apply_color_btn"])
+        self.sec3_label.configure(text=t["sec3_title"])
+        self.ratio_badge.configure(text=t["ratio_badge_text"])
+
+        self.sec4_label.configure(text=t["sec4_title"])
+        self.res_label.configure(text=t["target_res_label"])
+
+        # Update resolution presets
+        presets_dict = self.STANDARD_PRESETS if self.current_lang == "zh" else self.STANDARD_PRESETS_EN
+        auto_text = t["match_image_size"].format(f"{self.image_orig_size[0]} x {self.image_orig_size[1]}")
+        menu_values = [auto_text] + list(presets_dict.keys()) + [t["manual_res_option"]]
+        self.res_menu.configure(values=menu_values)
+        if "手动" in self.res_var.get() or "Manual" in self.res_var.get():
+            self.res_var.set(t["manual_res_option"])
+        elif any(k in self.res_var.get() for k in presets_dict.keys()):
+            pass
+        else:
+            self.res_var.set(auto_text)
+
+        self.custom_w_entry.configure(placeholder_text=t["custom_w_placeholder"])
+        self.custom_h_entry.configure(placeholder_text=t["custom_h_placeholder"])
+        self.apply_custom_btn.configure(text=t["apply_size_btn"])
+        self.fps_label.configure(text=t["fps_label"])
+
+        self.sec5_label.configure(text=t["sec5_title"])
+        self.angle_label.configure(text=t["angle_label"].format(int(self.angle_slider.get())))
+        self.width_label.configure(text=t["width_label"].format(self.width_slider.get()))
+        self.speed_label.configure(text=t["speed_label"].format(self.speed_slider.get()))
+        self.pause_label.configure(text=t["pause_label"].format(self.pause_slider.get()))
+        self.bright_label.configure(text=t["bright_label"].format(int(self.bright_slider.get() * 100)))
+
+        self.color_label.configure(text=t["color_preset_label"])
+        self.color_menu.configure(values=t["color_presets"])
+        self.color_var.set(t["color_presets"][0])
+
+        self.right_title.configure(text=t["right_title"])
+        self.right_sub.configure(text=t["right_sub"])
+        self.export_zip_btn.configure(text=t["export_zip_btn"])
+        self.export_gif_btn.configure(text=t["export_gif_btn"])
+        self.open_dir_btn.configure(text=t["open_folder_btn"])
+        if "准备" in self.status_label.cget("text") or "Ready" in self.status_label.cget("text"):
+            self.status_label.configure(text=t["status_ready"])
+
+        self._update_bg_badge()
+        self._update_res_badge()
+        self.preview_canvas.set_language(self.current_lang)
+
     # --- Callbacks ---
 
     def _on_angle_change(self, val):
-        self.angle_label.configure(text=f"光束倾角: {int(val)}°")
+        self.angle_label.configure(text=self._t("angle_label").format(int(val)))
         self._trigger_preview_update()
 
     def _on_width_change(self, val):
-        self.width_label.configure(text=f"光束宽度: {val:.2f}")
+        self.width_label.configure(text=self._t("width_label").format(val))
         self._trigger_preview_update()
 
     def _on_speed_change(self, val):
-        self.speed_label.configure(text=f"扫光速度: {val:.1f} 秒/次")
+        self.speed_label.configure(text=self._t("speed_label").format(val))
         self._trigger_preview_update()
 
     def _on_pause_change(self, val):
-        self.pause_label.configure(text=f"循环间隔停顿: {val:.1f} 秒")
+        self.pause_label.configure(text=self._t("pause_label").format(val))
         self._trigger_preview_update()
 
     def _on_bright_change(self, val):
-        self.bright_label.configure(text=f"未扫光底色亮度: {int(val * 100)}%")
+        self.bright_label.configure(text=self._t("bright_label").format(int(val * 100)))
         self._trigger_preview_update()
 
     def _on_preset_change(self, choice):
-        if "手动输入" in choice:
+        if "手动" in choice or "Manual" in choice:
             self.custom_res_frame.pack(fill="x", pady=(4, 6))
         else:
             self.custom_res_frame.pack_forget()
@@ -400,10 +650,10 @@ class BootAnimationApp(ctk.CTk):
 
     def _update_res_badge(self):
         w, h = self._get_target_resolution()
-        self.res_badge.configure(text=f"🎯 实际输出尺寸: {w} x {h}")
+        self.res_badge.configure(text=self._t("effective_res_badge").format(w, h))
 
     def _on_screen_bg_mode_change(self, choice):
-        if choice == "自定义颜色":
+        if "自定义" in choice or "Custom" in choice:
             self.custom_hex_entry.pack(side="left", padx=(0, 6))
             self.custom_hex_btn.pack(side="left")
         else:
@@ -421,14 +671,18 @@ class BootAnimationApp(ctk.CTk):
         hex_str = "#{:02X}{:02X}{:02X}".format(*color)
         lum = 0.299 * color[0] + 0.587 * color[1] + 0.114 * color[2]
         txt_color = "#000000" if lum > 140 else "#FFFFFF"
-        self.bg_preview_badge.configure(text=f"当前底色: {hex_str}", fg_color=hex_str, text_color=txt_color)
+        self.bg_preview_badge.configure(
+            text=self._t("current_bg_text").format(hex_str),
+            fg_color=hex_str,
+            text_color=txt_color
+        )
 
     def _on_browse_file(self):
         file_path = filedialog.askopenfilename(
-            title="选择 Logo 图片",
+            title=self._t("dlg_select_image"),
             filetypes=[
-                ("图片文件", "*.png *.jpg *.jpeg *.webp *.bmp"),
-                ("所有文件", "*.*")
+                ("Image files", "*.png *.jpg *.jpeg *.webp *.bmp"),
+                ("All files", "*.*")
             ]
         )
         if file_path:
@@ -439,7 +693,6 @@ class BootAnimationApp(ctk.CTk):
         self.path_entry.delete(0, "end")
         self.path_entry.insert(0, file_path)
 
-        # Update image dimensions and border color
         try:
             with Image.open(file_path) as img:
                 self.image_orig_size = img.size
@@ -448,41 +701,41 @@ class BootAnimationApp(ctk.CTk):
             self.image_orig_size = (1080, 2400)
             self.detected_bg_color = (0, 0, 0)
 
-        # Update resolution options with detected image size
-        auto_text = f"跟随图片原图尺寸 ({self.image_orig_size[0]} x {self.image_orig_size[1]})"
-        menu_values = [auto_text] + list(self.STANDARD_PRESETS.keys()) + ["手动输入自定义尺寸..."]
+        t = self.I18N[self.current_lang]
+        presets_dict = self.STANDARD_PRESETS if self.current_lang == "zh" else self.STANDARD_PRESETS_EN
+        auto_text = t["match_image_size"].format(f"{self.image_orig_size[0]} x {self.image_orig_size[1]}")
+        menu_values = [auto_text] + list(presets_dict.keys()) + [t["manual_res_option"]]
         self.res_menu.configure(values=menu_values)
 
-        # Default to following the image size!
         self.res_var.set(auto_text)
         self.custom_res_frame.pack_forget()
         self._update_res_badge()
-
-        # Update background color badge
         self._update_bg_badge()
         self._trigger_preview_update()
 
     def _load_default_sample(self):
         sample_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "assets", "sample_logo.png"))
         if os.path.exists(sample_path):
-            self.screen_bg_var.set("经典纯黑 (#000000)")
-            self._on_screen_bg_mode_change("经典纯黑 (#000000)")
+            black_option = self._t("screen_bg_modes")[1]
+            self.screen_bg_var.set(black_option)
+            self._on_screen_bg_mode_change(black_option)
             self._load_image_file(sample_path)
 
     def _load_blue_sample(self):
         sample_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "assets", "blue_sample_logo.png"))
         if os.path.exists(sample_path):
-            self.screen_bg_var.set("自动延展图片底色 (无缝沉浸)")
-            self._on_screen_bg_mode_change("自动延展图片底色 (无缝沉浸)")
+            auto_option = self._t("screen_bg_modes")[0]
+            self.screen_bg_var.set(auto_option)
+            self._on_screen_bg_mode_change(auto_option)
             self._load_image_file(sample_path)
 
     def _get_canvas_bg_color(self) -> Tuple[int, int, int]:
         mode = self.screen_bg_var.get()
-        if mode == "经典纯黑 (#000000)":
+        if "纯黑" in mode or "Pure Black" in mode:
             return (0, 0, 0)
-        elif mode == "自动延展图片底色 (无缝沉浸)":
+        elif "自动" in mode or "Auto" in mode:
             return self.detected_bg_color
-        elif mode == "自定义颜色":
+        elif "自定义" in mode or "Custom" in mode:
             hex_val = self.custom_hex_entry.get().strip().lstrip("#")
             if len(hex_val) == 6:
                 try:
@@ -493,10 +746,10 @@ class BootAnimationApp(ctk.CTk):
 
     def _get_target_resolution(self) -> Tuple[int, int]:
         choice = self.res_var.get()
-        if "跟随图片" in choice:
+        if "跟随图片" in choice or "Match Image" in choice:
             return self.image_orig_size
 
-        size = self.STANDARD_PRESETS.get(choice)
+        size = self.STANDARD_PRESETS.get(choice) or self.STANDARD_PRESETS_EN.get(choice)
         if size is not None:
             return size
 
@@ -513,7 +766,7 @@ class BootAnimationApp(ctk.CTk):
 
         target_size = self._get_target_resolution()
         fps = 30 if "30" in self.fps_var.get() else 60
-        bg_mode = self.BG_MODES.get(self.bg_mode_var.get(), "auto")
+        bg_mode = self.BG_MODE_MAP.get(self.bg_mode_var.get(), "auto")
         canvas_bg = self._get_canvas_bg_color()
 
         beam_angle = float(self.angle_slider.get())
@@ -584,7 +837,7 @@ class BootAnimationApp(ctk.CTk):
             if preview_engine:
                 self.preview_canvas.update_animation(preview_engine)
         except Exception as e:
-            self.status_label.configure(text=f"预览加载失败: {e}", text_color="#FF6B6B")
+            self.status_label.configure(text=f"Preview error: {e}", text_color="#FF6B6B")
 
     # --- Export Handlers ---
 
@@ -593,10 +846,10 @@ class BootAnimationApp(ctk.CTk):
             return
 
         save_path = filedialog.asksaveasfilename(
-            title="保存 bootanimation.zip",
+            title=self._t("dlg_save_zip"),
             defaultextension=".zip",
             initialfile="bootanimation.zip",
-            filetypes=[("Zip 文件", "*.zip")]
+            filetypes=[("Zip files", "*.zip")]
         )
         if not save_path:
             return
@@ -608,7 +861,7 @@ class BootAnimationApp(ctk.CTk):
             try:
                 engine = self._create_engine(for_preview=False)
                 if not engine:
-                    raise ValueError("请先选择有效的 Logo 图片。")
+                    raise ValueError("Please select a valid image first.")
 
                 def progress_cb(cur, total, msg):
                     ratio = cur / max(1, total)
@@ -620,24 +873,23 @@ class BootAnimationApp(ctk.CTk):
                 def on_done():
                     self._set_busy(False)
                     self.prog_bar.set(1.0)
+                    t = self.I18N[self.current_lang]
                     if verify_res["is_valid"]:
                         bg_hex = "#{:02X}{:02X}{:02X}".format(*engine.canvas_bg_uint8)
                         self.status_label.configure(
-                            text=f"✅ 生成成功！尺寸 {engine.screen_w}x{engine.screen_h} 底色 {bg_hex}",
+                            text=t["status_success_zip"].format(engine.screen_w, engine.screen_h, bg_hex),
                             text_color="#4ADE80"
                         )
                         self.open_dir_btn.pack(fill="x", pady=(6, 0))
                         messagebox.showinfo(
-                            "导出成功",
-                            f"bootanimation.zip 已成功生成！\n\n"
-                            f"分辨率: {engine.screen_w} x {engine.screen_h} ({engine.fps} FPS)\n"
-                            f"全屏底色: {bg_hex} (无缝沉浸)\n"
-                            f"保存路径: {save_path}\n\n"
-                            "已通过 Android AOSP 规范验证（0% 压缩率，LF 换行）。"
+                            t["dlg_export_success_title"],
+                            t["zip_success_msg"].format(
+                                engine.screen_w, engine.screen_h, engine.fps, bg_hex, save_path
+                            )
                         )
                     else:
                         self.status_label.configure(
-                            text=f"⚠️ 生成完成，但验证异常: {verify_res['errors']}",
+                            text=f"Warning: {verify_res['errors']}",
                             text_color="#FBBF24"
                         )
 
@@ -646,8 +898,9 @@ class BootAnimationApp(ctk.CTk):
             except Exception as e:
                 def on_err(err_msg):
                     self._set_busy(False)
-                    self.status_label.configure(text=f"❌ 导出失败: {err_msg}", text_color="#F87171")
-                    messagebox.showerror("导出失败", f"生成 bootanimation.zip 时发生错误:\n{err_msg}")
+                    t = self.I18N[self.current_lang]
+                    self.status_label.configure(text=f"Error: {err_msg}", text_color="#F87171")
+                    messagebox.showerror(t["dlg_export_fail_title"], str(err_msg))
 
                 self.after(0, lambda: on_err(str(e)))
 
@@ -658,10 +911,10 @@ class BootAnimationApp(ctk.CTk):
             return
 
         save_path = filedialog.asksaveasfilename(
-            title="保存预览 GIF",
+            title=self._t("dlg_save_gif"),
             defaultextension=".gif",
             initialfile="preview.gif",
-            filetypes=[("GIF 文件", "*.gif")]
+            filetypes=[("GIF files", "*.gif")]
         )
         if not save_path:
             return
@@ -673,7 +926,7 @@ class BootAnimationApp(ctk.CTk):
             try:
                 engine = self._create_engine(for_preview=False)
                 if not engine:
-                    raise ValueError("请先选择有效的 Logo 图片。")
+                    raise ValueError("Please select a valid image first.")
 
                 def progress_cb(cur, total, msg):
                     ratio = cur / max(1, total)
@@ -684,17 +937,22 @@ class BootAnimationApp(ctk.CTk):
                 def on_done():
                     self._set_busy(False)
                     self.prog_bar.set(1.0)
-                    self.status_label.configure(text="✅ 预览 GIF 已保存！", text_color="#4ADE80")
+                    t = self.I18N[self.current_lang]
+                    self.status_label.configure(text=t["status_success_gif"], text_color="#4ADE80")
                     self.open_dir_btn.pack(fill="x", pady=(6, 0))
-                    messagebox.showinfo("导出成功", f"预览动图已成功导出至:\n{save_path}")
+                    messagebox.showinfo(
+                        t["dlg_export_success_title"],
+                        t["gif_success_msg"].format(save_path)
+                    )
 
                 self.after(0, on_done)
 
             except Exception as e:
                 def on_err(err_msg):
                     self._set_busy(False)
-                    self.status_label.configure(text=f"❌ GIF 导出失败: {err_msg}", text_color="#F87171")
-                    messagebox.showerror("导出失败", f"导出 GIF 失败:\n{err_msg}")
+                    t = self.I18N[self.current_lang]
+                    self.status_label.configure(text=f"GIF error: {err_msg}", text_color="#F87171")
+                    messagebox.showerror(t["dlg_export_fail_title"], str(err_msg))
 
                 self.after(0, lambda: on_err(str(e)))
 
@@ -718,7 +976,7 @@ class BootAnimationApp(ctk.CTk):
             folder = os.path.dirname(os.path.abspath(self.last_export_path))
             os.startfile(folder)
         else:
-            messagebox.showinfo("提示", "文件或目录不存在。")
+            messagebox.showinfo("Notice", "File or directory does not exist.")
 
 
 def run_app():
