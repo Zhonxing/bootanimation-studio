@@ -1,0 +1,18 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Output bootanimation test files
+*.zip
+
+# Virtual environment
+venv/
+env/
+.env
+
+# Editor & OS files
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
